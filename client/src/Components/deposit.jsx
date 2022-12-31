@@ -1,15 +1,14 @@
 import React from 'react';
-import { Consumer, FormBody, Form,  UnAuthMessage, AuthStatus } from '../Context/context';
+import { FormBody, Form} from '../Context/context';
+import { AuthConsumer, UnAuthMessage } from '../Context/authContext';
 
 function Deposit() {
-    const [status, setStatus]   = React.useState('');
-    // const authenticated = JSON.parse(localStorage.getItem('isLoggenIn'));
-    const auth =        React.useContext(AuthStatus);
+    const [status, ]   = React.useState('');
 
     return (
-        <Consumer>
+        <AuthConsumer>
             { value => (
-            auth.isAuthenticated === true ? (
+            value.isAuthenticated === true ? (
             <FormBody
             bgcolor="success"
             header="Deposit"
@@ -31,7 +30,7 @@ function Deposit() {
             <UnAuthMessage />
             )
             )}
-        </Consumer>
+        </AuthConsumer>
         )
     }
 

@@ -1,18 +1,21 @@
 import React from 'react';
-import {Consumer, UserContext, UnAuthMessage, AuthStatus } from '../Context/context';
+import { UserContext } from '../Context/context';
+import { AuthContext, AuthConsumer, UnAuthMessage} from '../Context/authContext';
+import { base_uri } from '../App';
 
 function Transactions() {
     const ctx                               = React.useContext(UserContext);
-    const auth                              = React.useContext(AuthStatus);
+    const auth                              = React.useContext(AuthContext);
     const [transactions, setTransactions]   = React.useState([]);
 
-    const authenticated = JSON.parse(localStorage.getItem('isLoggenIn'));
+    // const authenticated = JSON.parse(localStorage.getItem('isLoggenIn'));
+    const authenticated = auth.isAuthenticated
 
     function getUserTrasnactions(email) {
         let token = auth.token.accessToken;
         
         console.log('Pulling User Transactions');
-        const url = `/account/transactions/${email}`;
+        const url = `${base_uri}/account/transactions/${email}`;
         (async () => {
             var res     = await fetch(url, {headers: {"Authorization": `Bearer ${token}`}});
             var data    = await res.json();
@@ -31,7 +34,7 @@ function Transactions() {
     }
 
     return (
-        <Consumer>
+        <AuthConsumer>
             { value => (
             authenticated === true ? (
             <div className="container">
@@ -61,7 +64,7 @@ function Transactions() {
             <UnAuthMessage /> 
             )
             )}
-        </Consumer>
+        </AuthConsumer>
     );
 };
 

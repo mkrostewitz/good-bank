@@ -1,5 +1,6 @@
 const MongoClient   = require('mongodb').MongoClient;
-const url           = 'mongodb://localhost:27017';
+const url           = 'mongodb://intutecmitadmin:kLjINXIPZHrDoVNY4h683z7pB216HEwZfgzvGJx2XAtPMdn2J0RXVOWg1AmzvlabKqeZO6Xby8SEACDbFHXxgA==@intutecmitadmin.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@intutecmitadmin@';
+// const url           = 'mongodb://localhost:27017';
 let db              = null;
 
 
@@ -34,7 +35,7 @@ function userSearch(email){
     });
 };
 
-// logout of user account
+// login to user account
 function userLogin(email){
     return new Promise((resolve, reject) => {
         const collection = db.collection('users');
@@ -52,6 +53,18 @@ function userLogout(email){
         const collection = db.collection('users');
         const user = {email: email}
         const doc = {$set: {loggedIn: false}};
+        collection.updateOne(user, doc, function(err, result){
+            err ? reject(err) : resolve(result);
+        });
+    });
+};
+
+// update user account
+function userUpdate(email, name, password){
+    return new Promise((resolve, reject) => {
+        const collection = db.collection('users');
+        const user = {email: email}
+        const doc = {$set: {name: name, email: email, password: password}};
         collection.updateOne(user, doc, function(err, result){
             err ? reject(err) : resolve(result);
         });
@@ -105,4 +118,4 @@ function userTransactions(user) {
     });    
 }
 
-module.exports = {create, all, userSearch,  updateBalance, newTransaction, userLogin, userLogout, userTransactions};
+module.exports = {create, all, userSearch,  updateBalance, newTransaction, userLogin, userLogout, userTransactions,userUpdate};

@@ -1,14 +1,14 @@
 import React from 'react';
-import { Consumer, FormBody, Form, UnAuthMessage } from '../Context/context';
+import { FormBody, Form } from '../Context/context';
+import { AuthConsumer, UnAuthMessage } from '../Context/authContext';
 
 function Withdraw() {
-    const [status, setStatus]   = React.useState('');
-    const authenticated = JSON.parse(localStorage.getItem('isLoggenIn'));
+    const [status, ]   = React.useState('');
     
     return (
-        <Consumer>
+        <AuthConsumer>
             { value => (
-            authenticated === true ? (
+            value.isAuthenticated === true ? (
             <FormBody
             bgcolor="info"
             header="Withdraw"
@@ -29,7 +29,7 @@ function Withdraw() {
             <UnAuthMessage />
             )
         )}
-        </Consumer>
+        </AuthConsumer>
     )
 };
 

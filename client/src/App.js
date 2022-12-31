@@ -1,33 +1,33 @@
-import React, { Fragment, useEffect, useState, useContext } from 'react';
+import React, { Fragment } from 'react';
 import { HashRouter, Routes, Route } from "react-router-dom";
-import { Home, AllData, NavBar, CreateAccount, Login, Deposit, Withdraw, Transactions } from './Components';
-import { UserContext, AuthStatus } from './Context/context';
+import { Home, AllData, CreateAccount, Login, Deposit, Withdraw, Transactions, NavBar, Profile} from './Components';
+import { UserContext } from './Context/context';
+import { AuthContext } from './Context/authContext'
 import './App.css';
+export const base_uri              = 'https://goodbank-server.azurewebsites.net'
 
 function Spa() {
 
-  const ctx                   = useContext(UserContext);
-  const auth                  = useContext(AuthStatus);
-
   return (
+    <AuthContext.Provider value={{isAuthenticated: false, token:{accessToken: '', refreshToken:''}}}>
       <HashRouter>
-        <AuthStatus.Provider value={auth}>
-          <UserContext.Provider value={ctx} >
-                <NavBar />
-                    <Routes>
-                      <Fragment>
-                        <Route path="/" exact element={<Home />} />
-                        <Route path="/login/" element={<Login />} />
-                        <Route path="/withdraw" element={<Withdraw />} />
-                        <Route path="/deposit" element={<Deposit />} />
-                        <Route path="/transactions" element={<Transactions />} />
-                        <Route path="/createaccount" element={<CreateAccount />} />
-                        <Route path="/alldata" element={<AllData />} />
-                    </Fragment>
-                  </Routes>
+          <UserContext.Provider value={{user:'', email:'', role:'', account:'', balance: 0}} >
+            <NavBar />
+                <Routes>
+                  <Fragment>
+                    <Route path="/" exact element={<Home />} />
+                    <Route path="/login/" element={<Login />} />
+                    <Route path="/withdraw" element={<Withdraw />} />
+                    <Route path="/deposit" element={<Deposit />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/transactions" element={<Transactions />} />
+                    <Route path="/createaccount" element={<CreateAccount />} />
+                    <Route path="/alldata" element={<AllData />} />
+                </Fragment>
+              </Routes>
           </UserContext.Provider>
-        </AuthStatus.Provider>
       </HashRouter>
+    </AuthContext.Provider>
   );
 }
 

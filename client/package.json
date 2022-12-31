@@ -1,7 +1,6 @@
 {
   "name": "good-bank",
   "version": "1.0.0",
-  "proxy": "http://localhost:5000",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",

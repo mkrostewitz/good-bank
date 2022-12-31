@@ -2,7 +2,7 @@ import React from 'react';
 import { FormBody, Form } from '../Context/context';
 
 function Login() {
-    const [status, setStatus]   = React.useState('');
+    const [status, ]       = React.useState('');
 
     return (
         <FormBody

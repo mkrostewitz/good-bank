@@ -1,8 +1,10 @@
 import React from "react";
+import { AuthContext } from "../Context/authContext";
+import { useNavigate } from "react-router-dom";
+import { base_uri } from "../App";
 
 const UserContext           = React.createContext({user:'', email:'', role:'', account:'', balance: 0});
-const AuthStatus            = React.createContext({isAuthenticated: false});
-const Consumer              = AuthStatus.Consumer;
+const UserConsumer          = UserContext.Consumer;
 
 function FormBody(props){
     function classes() {
@@ -35,21 +37,41 @@ function Form(props) {
     }
 
     const [show, setShow]                       = React.useState(true);
-    const [status, setStatus]                   = React.useState({details: '', message: '', show: true});
-    const [name, setName]                       = React.useState('');
-    const [email, setEmail]                     = React.useState('');
+    const [status, setStatus]                   = React.useState({details: {}, show: true});
     const [amount, setAmount]                   = React.useState('');
     const [password, setPassword]               = React.useState('');
     const [disabled, setDisabled]               = React.useState(true);
 
-    const ctx = React.useContext(UserContext);
-    const auth = React.useContext(AuthStatus);
+    const ctx                   = React.useContext(UserContext);
+    const auth                  = React.useContext(AuthContext);
+    const navigate = useNavigate();
 
     const FormName = !props.showFormName ? false : true;
+    const NameValue = !props.NameInput ? false : props.NameInput;
     const FormEmail = !props.showFormEmail ? false : true;
+    const EmailValue = !props.EmailInput ? false : props.EmailInput;
     const FormPassword = !props.showFormPassword ? false : true;
     const FormAmount = !props.showFormAmount ? false : true;
     const FormBalance = !props.showFormBalance ? false : true;
+
+    
+    // Prefill Fields for User Profile
+    let predefinedValue
+    if (NameValue) { 
+        predefinedValue = NameValue
+    } else {
+        predefinedValue = ''
+    }
+    const [name, setName]                       = React.useState(predefinedValue);
+
+
+    if (EmailValue) {
+        predefinedValue = EmailValue
+    } else {
+        predefinedValue = ''
+    }
+
+    const [email, setEmail]                     = React.useState(predefinedValue);
 
     //Clear Form
     function clearForm() {
@@ -73,15 +95,20 @@ function Form(props) {
 
     //validateForm
     function validateForm(field, label) {
+        let response 
+
         if (!field) {
-            setStatus({details: {status: 'Error', message: `${label} missing`}});
-            setTimeout(() => setStatus({details: {status: '', message: '', show: true}}), 3000);
+            response = {details: {status: 'error', message: `${label} missing`}};
+            setTimeout(() => setStatus(response.details), 3000);
+            console.log(status)
             return false;
         }
         // verify that the password has at least 8 characters
         if (label === 'password') {
             if (field.length < 8 ) {
-                setStatus({details: { status: 'Error', message: `Your ${label} must contain of at least 8 characters.`}});
+                response = {details: { status: 'error', message: `Your ${label} must contain of at least 8 characters.`}}
+                setStatus(response.details)
+                console.log(status)
                 return false;
             };
             return true
@@ -90,7 +117,9 @@ function Form(props) {
         //verify that numbers are numbers
         if (label === 'Amount') {
             if (isNaN(field)) {
-                setStatus({details: { status:'Error', message: `${label} should consist only of integers.`}});
+                response = {details: { status:'error', message: `${label} should consist only of integers.`}};
+                setStatus(response.details);
+                console.log(status)
                 return false;
             };
             return true
@@ -127,23 +156,38 @@ function Form(props) {
     //create new user account
     function createUser(name, email, password) {
         console.log('Storing user details');
-        const url = `/account/create/${name}/${email}/${password}`;
+        const url = `${base_uri}/account/create/${name}/${email}/${password}`;
         (async () => {
             var res     = await fetch(url);
             var data    = await res.json();
             console.log(`Returned Data ${JSON.stringify(data)}`)
-            if(data.status === 'success') {
-                setShow(data.login.show);
+            if(data.details.status === 'success') {
+                setShow(data.details.show);
             };
-            setStatus(data);
+            setStatus(data.details);
         })();
     }
+
+        //update Profile
+        function updateUser(name, email, password) {
+            console.log('Updating User Profile');
+            const url = `${base_uri}/account/update/${name}/${email}/${password}`;
+            (async () => {
+                var res     = await fetch(url);
+                var data    = await res.json();
+                console.log(`Returned Data ${JSON.stringify(data)}`)
+                if(data.details.status === 'success') {
+                    // setShow(data.details.show);
+                };
+                setStatus(data.details);
+            })();
+        }
 
     //login to user account
     function loginUser(email, password) {
         
         console.log('Logging in user');
-        const url = `/account/login/${email}/${password}`;
+        const url = `${base_uri}/account/login/${email}/${password}`;
         (async () => {
             var res     = await fetch(url);
             var data    = await res.json();
@@ -152,13 +196,15 @@ function Form(props) {
                 // Update User Context
                 window.localStorage.setItem('user', JSON.stringify(data.userinfo));
                 window.localStorage.setItem('token', JSON.stringify(data.token));
-                window.localStorage.setItem('isLoggenIn', true );
+                window.localStorage.setItem('isLoggedIn', true );
                 updateUserContext(data.userinfo);
 
                 //update authentication status
                 updateAuthentication(data.token);
                 setShow(data.details.show);
                 setStatus(data.details);
+                navigate('/Profile')
+                
             } else {
                 setStatus(data.details)
             };
@@ -170,12 +216,12 @@ function Form(props) {
         let token = auth.token.accessToken;
 
         console.log(`Depositing ${amount} $ to ${user}'s account.`);
-        const url = `/deposit/${user}/${amount}`;
+        const url = `${base_uri}/deposit/${user}/${amount}`;
         (async () => {
             var res     = await fetch(url, {headers: {"Authorization": `Bearer ${token}`}});
             var data    = await res.json();
             console.log(`Returned Data ${JSON.stringify(data)}`)
-            if(data.details.status == 'success') {
+            if(data.details.status === 'success') {
                 // Record Transaction
                 recordTransaction(label, user, data.userinfo._id, data.userinfo.account, amount, data.userinfo.balance)
                 
@@ -195,12 +241,12 @@ function Form(props) {
         let token = auth.token.accessToken;
 
         console.log(`Withdrawing ${amount} $ from ${user}'s account.`);
-        const url = `/withdraw/${user}/${amount}`;
+        const url = `${base_uri}/withdraw/${user}/${amount}`;
         (async () => {
             var res     = await fetch(url, {headers: {"Authorization": `Bearer ${token}`}});
             var data    = await res.json();
             console.log(`Returned Data ${JSON.stringify(data)}`)
-            if(data.details.status == 'success') {
+            if(data.details.status === 'success') {
                 // Record Transaction
                 recordTransaction(label, user, data.userinfo._id, data.userinfo.account, amount, data.userinfo.balance)
                 
@@ -233,12 +279,12 @@ function Form(props) {
         date = mm + '-' + dd + '-' + yyyy;
 
         console.log(`Recording Transaction for ${account} over the amount of ${amount} $ for ${user}'s account.`);
-        const url = `/transaction/${label}/${date}/${id}/${user}/${account}/${amount}/${balance}`;
+        const url = `${base_uri}/transaction/${label}/${date}/${id}/${user}/${account}/${amount}/${balance}`;
             (async () => {
                 var res     = await fetch(url);
                 var data    = await res.json();
                 console.log(`Returned Data ${JSON.stringify(data)}`)
-                if(data.details.status == 'success') {
+                if(data.details.status === 'success') {
                     // Record Transaction
                     console.log(`successfull recorded transaction for ${user}`)
                 };
@@ -250,10 +296,25 @@ function Form(props) {
         //handle create account
         if (action === "accCreate") { 
                 console.log(name, email, password);
-                if (!validateForm(name, 'name')) return;
-                if (!validateForm(email, 'email')) return;
-                if (!validateForm(password, 'password')) return;
-                createUser(name, email, password);
+                validateForm(name, 'name')
+                validateForm(email, 'email')
+                validateForm(password, 'password')
+
+                if(validateForm(name, 'name') && validateForm(email, 'email') && validateForm(password, 'password') ) {
+                    createUser(name, email, password);
+                }
+        };
+
+        //handle account update
+        if (action === "updateProfile") { 
+            console.log(name, email, password);
+            validateForm(name, 'name')
+            validateForm(email, 'email')
+            validateForm(password, 'password')
+
+            if(validateForm(name, 'name') && validateForm(email, 'email') && validateForm(password, 'password') ) {
+                updateUser(name, email, password);
+            }
         };
 
         //handle login
@@ -300,7 +361,11 @@ function Form(props) {
             {FormEmail && 
             <div id="required" className={classes()}>
                 <label htmlFor="email" className="form-label text-white">Email</label>
+                {EmailValue ?
+                <input type="input" className="form-control" id="email" placeholder={EmailValue} value={email} onBlur={e => success('email', props.buttonAction, e.currentTarget.value)}  onChange={e => setEmail(e.currentTarget.value)} disabled />
+                :
                 <input type="input" className="form-control" id="email" placeholder="Enter Email" value={email} onBlur={e => success('email', props.buttonAction, e.currentTarget.value)}  onChange={e => setEmail(e.currentTarget.value)} />
+                }
             </div>
             }
 
@@ -319,6 +384,7 @@ function Form(props) {
             </div>
             }
 
+
             {FormBalance &&
                 <div className={classes()}>
                 <h3>Hi {ctx.user}!</h3> 
@@ -328,6 +394,7 @@ function Form(props) {
 
             <button type="submit" id="button" className="btn btn-light" onClick={e => handleSubmit(props.buttonAction)} disabled={disabled}>{props.buttonLabel}</button>
             {status.status === 'error' && <div id="status" className="form-text text-danger">{status.message}</div>}
+            {status.status === 'success' && <div id="status" className="form-text text-green">{status.message}</div>}
             </form>
             
             ):(
@@ -335,19 +402,10 @@ function Form(props) {
             <div>
             <h5>Success</h5>
             <button type="submit" className="btn btn-light" onClick={clearForm}>{props.successButton}</button>
-            {status.status === 'success' && <div id="status" className="form-text text-white">{status.message}</div>}
+            {status.status === 'success' && <div id="status" className="form-text text-black">{status.message}</div>}
             </div>    
             )
     )
 }
 
-function UnAuthMessage(props) {
-    return (
-        <div className="container">
-        <h1>You are currently not logged in!</h1><br/>
-        <p>Please login or register for an account first...</p>
-        </div>
-    )
-}
-
-export { UserContext, AuthStatus, Consumer, FormBody, Form, UnAuthMessage};
+export { UserContext, UserConsumer, FormBody, Form };

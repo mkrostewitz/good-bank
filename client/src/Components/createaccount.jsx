@@ -3,7 +3,7 @@ import React from 'react';
 import { FormBody, Form } from '../Context/context';
 
 function CreateAccount() {
-    const [status, setStatus]   = React.useState('');
+    const [status, ]   = React.useState('');
     
     return (
         <FormBody

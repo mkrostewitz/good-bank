@@ -1,14 +1,44 @@
 
 import React from 'react';
-import { FormBody, Form } from '../Context/context';
+import { FormBody, Form, UserConsumer } from '../Context/context';
+import { AuthConsumer, UnAuthMessage} from '../Context/authContext';
 
 function Profile() {
-    const [status, setStatus]   = React.useState('');
+    const [status, ]   = React.useState('');
     
     return (
-        <>
-        <h1>Hello User</h1>
-        </>
+        <AuthConsumer>
+        { auth => (
+        auth.isAuthenticated === true ? (
+        <FormBody
+        bgcolor="light"
+        txtcolor="dark"
+        header="Profile Information"
+        status={status}
+        body={
+            <UserConsumer>
+            { user => (
+            <Form
+            bgcolor="light"
+            buttonLabel="Update"
+            buttonAction="updateProfile"
+            showFormName={true}
+            NameInput={user.user}
+            showFormEmail={true}
+            EmailInput={user.email}
+            showFormPassword={true}
+            amountType="none"
+            disabled
+            />
+            )}
+            </UserConsumer>
+            }
+        />
+        ):(
+        <UnAuthMessage />
+        )
+        )}
+    </AuthConsumer>
     )
     };
 

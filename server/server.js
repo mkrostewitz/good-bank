@@ -4,10 +4,13 @@ const cors                  = require('cors');
 const dal                   = require('./dal');
 const auth                  = require('./auth');
 
-// used to serve ststic fils from the public directory
-// app.use(express.static('public'));
+
 app.use(cors());
 
+//<---------------------- PUBLIC ---------------------->
+app.get('/', (req, res) => {
+    res.send('Good Bank Database Server!')
+  })
 
 //<---------------------- CREATE USER ACCOUNT ---------------------->
 app.get('/account/create/:name/:email/:password', function (req, res) {
@@ -47,8 +50,8 @@ app.get('/account/create/:name/:email/:password', function (req, res) {
 //<---------------------- LOGIN TO USER ACCOUNT ---------------------->
 app.get('/account/login/:email/:password', function (req, res) {
 
-    user        = req.params.email;
-    password    = req.params.password;
+    let user        = req.params.email;
+    let password    = req.params.password;
 
     let response;
 
@@ -62,6 +65,32 @@ app.get('/account/login/:email/:password', function (req, res) {
         } else {
             // authenticate & authorize user
              res.send(auth.validateUser(user, password, 'User', doc));
+        }
+    });
+});
+
+//<---------------------- UPDATE USER ACCOUNT ---------------------->
+app.get('/account/update/:name/:email/:password', function (req, res) {
+
+    let username         = req.params.name;
+    let useremail        = req.params.email;
+    let userpass         = req.params.password;
+    let response;
+
+    // check if user exists
+    dal.userSearch(useremail)
+    .then((doc) => {
+        if (doc.length == 0 ) {
+            // user not found
+            response = {details: { status: 'error', message: `User ${useremail} could not be found`}}
+            res.send(response);
+        } else {
+            // update record
+            dal.userUpdate(useremail, username, userpass)
+            .then((result) => {
+                response = {details: { status: 'success', message: `User ${username} updated`}}
+                res.send(response)
+            })
         }
     });
 });
@@ -84,34 +113,28 @@ app.get('/account/logout/:email', function (req, res) {
           dal.userLogout(user)
           .then((result) => {
             response = {details: { status: 'success', message: `User ${user} logged out`}}
-            res.send(response)
+            res.send(response, result)
           })
       };
   });
 });
 
 //<---------------------- CHECK IF USER IS AUTHENTICATED ---------------------->
-app.get('/account/authenticate', auth.authenticateJWT, function (req, res) {
-  const { role } = req.user;
-  const { user } = req.user;
+app.get('/account/authenticate/:user', auth.authenticateJWT, function (req, res) {
   const { email } = req.user;
-  const { account } = req.user;
-  const { balance } = req.user;
+  const user = req.params.user;
 
+  console.log(email)
+  console.log(user)
 
-    if (role !== 'employee') {
-      return res.sendStatus(403);
+    if (user === email) {
+         return res.send(true);
+    } else {
+        return res.send(false)
     }
-
-    dal.all()
-    .then((docs) => {
-        console.log(docs);
-        res.send(docs);
-    });
 });
 
-
-//<---------------------- LIST ALL OF USER ACCOUNT ---------------------->
+//<---------------------- LIST ALL DATAA ---------------------->
 app.get('/account/all', auth.authenticateJWT, function (req, res) {
   const { role } = req.user;
 
@@ -122,7 +145,8 @@ app.get('/account/all', auth.authenticateJWT, function (req, res) {
     dal.all()
     .then((docs) => {
         console.log(docs);
-        res.send(docs);
+        let details = {status: 'success', show: false, message: `Successfully retracted all user data!`}
+        res.send({details, docs});
     });
 });
 
@@ -139,9 +163,9 @@ app.get('/transaction/:label/:date/:id/:user/:account/:amount/:balance', functio
 
   //Set Amount to +/- Depend on Deposit or Withdrawal
   if (label === "Withdraw") {
-    transactionAmount = -amount;
-  } else {
     transactionAmount = amount;
+  } else {
+    transactionAmount = -amount;
   }
 
   console.log(`About to create a transaction got ${label, date, id, user, account, transactionAmount, balance}`)
@@ -244,6 +268,6 @@ app.get('/account/transactions/:email', auth.authenticateJWT, function (req, res
   });
 });
 
-var port = 5000;
-app.listen(port);
+var port = 5000
+app.listen(process.env.PORT || port);
 console.log(`Application server running on port: ${port}`);
