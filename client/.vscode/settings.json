@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/fa4e0db2-44ef-4dad-82a9-3c957b795e22/AppServices/subscriptions/fa4e0db2-44ef-4dad-82a9-3c957b795e22/resourceGroups/appsvc_linux_centralus_basic2/providers/Microsoft.Web/sites/thegoodbank",
+    "appService.deploySubpath": "."
+}
